@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "1f60EbvFUW0=",
+  "dgSpecHash": "1wsO6/Sn0gI=",
   "success": true,
   "projectFilePath": "/Users/ericaaniga/vscode_files/projects/task-tracker/TaskTracker/TaskTracker.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/Users/ericaaniga/.nuget/packages/system.commandline/2.0.13/system.commandline.2.0.13.nupkg.sha512"
+  ],
   "logs": []
 }
