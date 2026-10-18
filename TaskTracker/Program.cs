@@ -42,22 +42,37 @@ namespace TaskTracker
             };
 
             Command listCommand = new("list", "List all tasks")
+            { };
+
+            Command markInProgressCommand = new("mark-in-progress", "Update status of a task to 'in progress'")
             {
-                Options = { verboseOption }
+                Arguments = { taskIdArgument }
+            };
+
+            Command markDoneCommand = new("mark-done", "Update status of a task to 'done'")
+            {
+                Arguments = { taskIdArgument }
+            };
+
+            Command markToDoCommand = new("mark-todo", "Update status of a task to 'done'")
+            {
+                Arguments = { taskIdArgument }
             };
 
 
             RootCommand rootCommand = new("A simple task tracker CLI")
             {
                 Options = { verboseOption },
-                Subcommands = { addCommand, updateCommand, deleteCommand, listCommand }
+                Subcommands = { addCommand, updateCommand, deleteCommand, listCommand, markInProgressCommand,
+                                markDoneCommand, markToDoCommand }
             };
+
+
 
 
             addCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
-
                 var description = parseResult.GetValue(descriptionArgument)!;
                 int id = tasks.Count == 0 ? 1 : (tasks.Last().Id + 1);
 
@@ -65,13 +80,12 @@ namespace TaskTracker
 
                 tasks.Add(task);
                 SaveTasks(tasks);
-                Console.WriteLine($"Added task {id}: {description}");
+                Console.WriteLine($"Task added: {id} - {description}");
             });
 
             updateCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
-
                 var description = parseResult.GetValue(descriptionArgument)!;
                 var id = parseResult.GetValue(taskIdArgument);
                 int index = 0;
@@ -86,7 +100,7 @@ namespace TaskTracker
                     };
 
                     SaveTasks(tasks);
-                    Console.WriteLine($"task updated: {id} - {description}");
+                    Console.WriteLine($"Task updated: {id} - {description}");
                 }
                 catch (ArgumentOutOfRangeException)
                 {
@@ -98,7 +112,6 @@ namespace TaskTracker
             deleteCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
-
                 var id = parseResult.GetValue(taskIdArgument);
 
                 var task = tasks.FirstOrDefault(t => t.Id == id);
@@ -111,7 +124,7 @@ namespace TaskTracker
 
                 tasks.Remove(task);
                 SaveTasks(tasks);
-                Console.WriteLine($"task deleted: {id} - {task.Description}");
+                Console.WriteLine($"Task deleted: {id} - {task.Description}");
 
                 return 0;
             });
@@ -119,10 +132,96 @@ namespace TaskTracker
             listCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
+                var verbose = parseResult.GetValue(verboseOption);
+                string statusString = "";
+
                 foreach (var item in tasks)
                 {
-                    Console.WriteLine($"Task Item {item.Id}: {item.Description} - Status: {item.Status.ToString()} ");
+                    switch (item.Status)
+                    {
+                        case Status.ToDo:
+                            statusString = "[ ]";
+                            break;
+                        case Status.InProgress:
+                            statusString = "[-]";
+                            break;
+                        case Status.Done:
+                            statusString = "[✓]";
+                            break;
+                        default:
+                            statusString = "[ ]";
+                            break;
+                    }
+
+                    Console.WriteLine($" {statusString} {item.Id}: {item.Description}");
+
+                    if (verbose)
+                    {
+                        Console.WriteLine($"Date created: {item.CreatedAt}");
+                        Console.WriteLine($"Date updated: {item.UpdatedAt}");
+                        Console.WriteLine();
+                    }
                 }
+            });
+
+            markInProgressCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
+                var id = parseResult.GetValue(taskIdArgument);
+
+                var task = tasks.FirstOrDefault(t => t.Id == id);
+                if (task is null)
+                {
+                    Console.Error.Write($"Task {id} not found.");
+                    return -1;
+                }
+
+                tasks[tasks.IndexOf(task)] = task with { Status = Status.InProgress };
+                SaveTasks(tasks);
+
+                Console.WriteLine($"Task {id} marked in progress.");
+                return 0;
+            });
+
+
+            markDoneCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
+                var id = parseResult.GetValue(taskIdArgument);
+
+                var task = tasks.FirstOrDefault(t => t.Id == id);
+
+                if (task is null)
+                {
+                    Console.Error.WriteLine($"Task {id} not found.");
+                    return -1;
+                }
+
+                tasks[tasks.IndexOf(task)] = task with { Status = Status.Done };
+                SaveTasks(tasks);
+
+                Console.WriteLine($"Task {id} marked done.");
+                return 0;
+            });
+
+            markToDoCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
+                var id = parseResult.GetValue(taskIdArgument);
+
+                var task = tasks.FirstOrDefault(t => t.Id == id);
+
+                if (task is null)
+                {
+                    Console.Error.WriteLine($"Task {id} not found.");
+                    return -1;
+                }
+
+                tasks[tasks.IndexOf(task)] = task with { Status = Status.ToDo };
+                SaveTasks(tasks);
+
+                Console.WriteLine($"Task {id} marked as to do.");
+                return 0;
             });
 
             return rootCommand.Parse(args).Invoke();
