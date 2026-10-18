@@ -54,12 +54,12 @@ namespace TaskTracker
             };
 
 
-            addCommand.SetAction(ParseResult =>
+            addCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
 
-                var description = ParseResult.GetValue(descriptionArgument)!;
-                int id = tasks.Count > 0 ? (tasks.Count + 1) : 1;
+                var description = parseResult.GetValue(descriptionArgument)!;
+                int id = tasks.Count == 0 ? 1 : (tasks.Last().Id + 1);
 
                 TaskItem task = new(id, description, Status.ToDo, DateTime.Now, DateTime.Now);
 
@@ -68,13 +68,69 @@ namespace TaskTracker
                 Console.WriteLine($"Added task {id}: {description}");
             });
 
-            return rootCommand.Parse(args).Invoke();
+            updateCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
 
+                var description = parseResult.GetValue(descriptionArgument)!;
+                var id = parseResult.GetValue(taskIdArgument);
+                int index = 0;
+
+                try
+                {
+                    index = tasks.FindIndex(t => t.Id == id);
+                    tasks[index] = tasks[index] with
+                    {
+                        Description = description,
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    SaveTasks(tasks);
+                    Console.WriteLine($"task updated: {id} - {description}");
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    Console.Error.WriteLine($"Task {id} not found.");
+                }
+
+            });
+
+            deleteCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
+
+                var id = parseResult.GetValue(taskIdArgument);
+
+                var task = tasks.FirstOrDefault(t => t.Id == id);
+
+                if (task is null)
+                {
+                    Console.Error.WriteLine($"Task {id} not found.");
+                    return -1;
+                }
+
+                tasks.Remove(task);
+                SaveTasks(tasks);
+                Console.WriteLine($"task deleted: {id} - {task.Description}");
+
+                return 0;
+            });
+
+            listCommand.SetAction(parseResult =>
+            {
+                var tasks = LoadTasks();
+                foreach (var item in tasks)
+                {
+                    Console.WriteLine($"Task Item {item.Id}: {item.Description} - Status: {item.Status.ToString()} ");
+                }
+            });
+
+            return rootCommand.Parse(args).Invoke();
         }
 
         public enum Status { ToDo, InProgress, Done }
 
-        public record TaskItem(int Id, string Description, Status Status, DateTime CreatedAt, DateTime UpdatedAt);
+        public record TaskItem(int Id, string Description, Status Status, DateTime? CreatedAt, DateTime UpdatedAt);
 
 
         static List<TaskItem> LoadTasks()
@@ -88,7 +144,6 @@ namespace TaskTracker
             }
             else
             {
-                Console.WriteLine(filePath);
                 string jsonString = File.ReadAllText(filePath);
                 tasks = JsonSerializer.Deserialize<List<TaskItem>>(jsonString)!;
             }
