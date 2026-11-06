@@ -26,6 +26,12 @@ namespace TaskTracker
                 Recursive = true
             };
 
+            Option<Status?> statusOption = new("--status")
+            {
+                Description = "List based on status",
+                DefaultValueFactory = _ => null
+            };
+
             Command addCommand = new("add", "Add a new task")
             {
                 Arguments = { descriptionArgument }
@@ -42,7 +48,9 @@ namespace TaskTracker
             };
 
             Command listCommand = new("list", "List all tasks")
-            { };
+            {
+                Options = { statusOption }
+            };
 
             Command markInProgressCommand = new("mark-in-progress", "Update status of a task to 'in progress'")
             {
@@ -66,8 +74,6 @@ namespace TaskTracker
                 Subcommands = { addCommand, updateCommand, deleteCommand, listCommand, markInProgressCommand,
                                 markDoneCommand, markToDoCommand }
             };
-
-
 
 
             addCommand.SetAction(parseResult =>
@@ -132,28 +138,36 @@ namespace TaskTracker
             listCommand.SetAction(parseResult =>
             {
                 var tasks = LoadTasks();
+
                 var verbose = parseResult.GetValue(verboseOption);
+                Status? statusList = parseResult.GetValue(statusOption);
+
+                if (statusList != null)
+                {
+                    Console.WriteLine(statusList);
+                }
+
+
                 string statusString = "";
 
                 foreach (var item in tasks)
                 {
-                    switch (item.Status)
+                    statusString = item.Status switch
                     {
-                        case Status.ToDo:
-                            statusString = "[ ]";
-                            break;
-                        case Status.InProgress:
-                            statusString = "[-]";
-                            break;
-                        case Status.Done:
-                            statusString = "[✓]";
-                            break;
-                        default:
-                            statusString = "[ ]";
-                            break;
-                    }
+                        Status.ToDo => "[ ]",
+                        Status.InProgress => "[-]",
+                        Status.Done => "[✓]",
+                        _ => "[ ]",
+                    };
 
-                    Console.WriteLine($" {statusString} {item.Id}: {item.Description}");
+                    if (statusList is null)
+                    {
+                        Console.WriteLine($" {statusString} {item.Id}: {item.Description}");
+                    }
+                    else if (statusList == item.Status)
+                    {
+                        Console.WriteLine($" {statusString} {item.Id}: {item.Description}");
+                    }
 
                     if (verbose)
                     {
@@ -182,7 +196,6 @@ namespace TaskTracker
                 Console.WriteLine($"Task {id} marked in progress.");
                 return 0;
             });
-
 
             markDoneCommand.SetAction(parseResult =>
             {
