@@ -4,10 +4,10 @@
 
 Task tracker is a simple command line interface (CLI) project used to track and manage your tasks.
 
-HOW TO RUN:
+## HOW TO RUN:
 dotnet run [command] [--options]
 
-COMMANDS:
+## COMMANDS:
 Help: Displays a list of all available commands.
 
 Add: Add a new task
@@ -20,18 +20,18 @@ Optional Features
 List <Status>: List tasks based on status
 
 
-INSTALLATION
+## INSTALLATION
 1. Clone the repository by running the following command:
-git clone https://github.com/erica0926/TaskTrackerCLI
+`git clone https://github.com/erica0926/TaskTrackerCLI`
 
 2. Navigate to the project directory:
-cd task-tracker/TaskTracker
+`cd task-tracker/TaskTracker`
 
 3. Restore dependencies:
-dotnet restore
+`dotnet restore`
 
 4. Build the project:
-dotnet build
+`dotnet build`
 
 5. Run the application:
 dotnet run
