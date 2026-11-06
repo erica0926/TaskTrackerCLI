@@ -62,15 +62,15 @@ namespace TaskTracker
                 Arguments = { taskIdArgument }
             };
 
-            Command markToDoCommand = new("mark-todo", "Update status of a task to 'done'")
+            Command markToDoCommand = new("mark-todo", "Update status of a task to 'to do'")
             {
                 Arguments = { taskIdArgument }
             };
 
 
-            RootCommand rootCommand = new("A simple task tracker CLI")
+            RootCommand rootCommand = new("A simple task tracker CLI app")
             {
-                Options = { verboseOption },
+                Options = { verboseOption, statusOption },
                 Subcommands = { addCommand, updateCommand, deleteCommand, listCommand, markInProgressCommand,
                                 markDoneCommand, markToDoCommand }
             };
@@ -243,7 +243,6 @@ namespace TaskTracker
         public enum Status { ToDo, InProgress, Done }
 
         public record TaskItem(int Id, string Description, Status Status, DateTime? CreatedAt, DateTime UpdatedAt);
-
 
         static List<TaskItem> LoadTasks()
         {
